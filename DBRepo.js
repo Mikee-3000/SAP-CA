@@ -9,7 +9,6 @@ class DBRepo {
   }
 
   add(table, record) {
-    // console.log(this.dbConnection)
     this.#dbConnection.run(`INSERT INTO ${table} VALUES (${record})`);
   }
 
