@@ -26,6 +26,7 @@ const userTableExists = userRepo.checkIfUserTableExists().then(tbExists => {
     log.log('Table User already exists');
   } else {
     log.log('Table User does not exist');
+    const firstPassword = User.generateRandomPassword();
     userRepo.createUserTable().then((res) => {
       if (res===true) {
         log.log('Table User created');
@@ -40,7 +41,6 @@ const userTableExists = userRepo.checkIfUserTableExists().then(tbExists => {
         });
       };
     });
-    const firstPassword = User.generateRandomPassword();
   }
 }).catch(err => {
   log.log(err);
