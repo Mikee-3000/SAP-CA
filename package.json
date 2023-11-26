@@ -1,0 +1,28 @@
+{
+  "name": "site.mikee.sap.ca",
+  "version": "1.0.0",
+  "description": "Frontend for GPT API",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Mikee-3000/SAP-CA.git"
+  },
+  "keywords": [
+    "GPT"
+  ],
+  "author": "Mike Eichler",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Mikee-3000/SAP-CA/issues"
+  },
+  "homepage": "https://github.com/Mikee-3000/SAP-CA#readme",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "generate-password": "^1.7.1",
+    "sqlite3": "^5.1.6"
+  }
+}
