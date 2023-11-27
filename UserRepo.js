@@ -24,10 +24,8 @@ class UserRepo {
                         reject('error');
                     }
                     if (row) {
-                        this.#log.log('Table User already exists');
                         resolve(true);
                     } else {
-                        this.#log.log('Table User does not exist');
                         resolve(false);
                     }
             });
@@ -45,10 +43,8 @@ class UserRepo {
                         reject('error');
                     }
                     if (row) {
-                        this.#log.log('User already exists');
                         resolve(true);
                     } else {
-                        this.#log.log('User does not exist');
                         resolve(false);
                     }
             });
@@ -56,7 +52,6 @@ class UserRepo {
     }
 
     createUserTable() {
-        this.#log.log('Creating table User');
         var sql = this.db.prepare(`
             CREATE TABLE IF NOT EXISTS User (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,7 +72,6 @@ class UserRepo {
                     this.#log.log(err.message);
                     reject(err);
                 } else {
-                    this.#log.log('Table User created');
                     resolve(true);
                 }
             });

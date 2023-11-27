@@ -25,7 +25,6 @@ class DBConnection {
 
     getConnection() {
         if (this.#connection) {
-            this.#log.log('Using existing connection');
             return this.#connection;
         }
 
@@ -33,7 +32,7 @@ class DBConnection {
             if (err) {
                 this.#log.log('Error connecting to DB'); 
             } else {
-                this.#log.log('Connected to the SQLite database.');
+                this.#log.log('Started a new connection to the database.');
             }
         });
 
