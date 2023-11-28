@@ -59,7 +59,7 @@ class UserRepo {
                 password TEXT,
                 email TEXT,
                 failed_logins INTEGER,
-                disabled INTEGER,
+                blocked INTEGER,
                 timestamp_account_created TEXT DEFAULT CURRENT_TIMESTAMP,
                 is_admin INTEGER,
                 key TEXT
@@ -80,8 +80,8 @@ class UserRepo {
 
     addUser(user) {
         return new Promise((resolve, reject) => {
-            const sql = this.db.prepare('INSERT INTO User (name, password, email, failed_logins, disabled, is_admin, key) VALUES (?, ?, ?, ?, ?, ?, ?)');
-            sql.run([user.getName(), user.getPassword(), user.getEmail(), user.getLoginFailedAttempts(), user.getIsDisabled(), user.getIsAdmin(), user.getKey()], (err) => {
+            const sql = this.db.prepare('INSERT INTO User (name, password, email, failed_logins, blocked, is_admin, key) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            sql.run([user.getName(), user.getPassword(), user.getEmail(), user.getLoginFailedAttempts(), user.getIsBlocked(), user.getIsAdmin(), user.getKey()], (err) => {
                 if (err) {
                     this.#log.log('Error adding user');
                     this.#log.log(err.message);
@@ -97,12 +97,13 @@ class UserRepo {
     findUserByName(name) {
         const sql = db.prepare('SELECT * FROM User WHERE name = ?');
         return new Promise((resolve, reject) => {
-            this.db.get(sql, [name], (err, row) => {
+            sql.get([name], (err, row) => {
                 if (err) {
                     this.#log.log('Error finding user');
                     this.#log.log(err.message);
                     reject(err);
                 } else {
+                    this.#log.log(row)
                     resolve(row);
                 }
             });
@@ -125,6 +126,23 @@ class UserRepo {
                 } else {
                     // no admin user
                     resolve(false);
+                }
+            });
+        });
+    }
+
+    // update the user
+    updateUser(user) {
+        const sql = db.prepare('UPDATE User SET password = ?, email = ?, failed_logins = ?, blocked = ?, is_admin = ?, key = ? WHERE name = ?');
+        return new Promise((resolve, reject) => {
+            sql.run([user.getPassword(), user.getEmail(), user.getLoginFailedAttempts(), user.getIsBlocked(), user.getIsAdmin(), user.getKey(), user.getName()], (err) => {
+                if (err) {
+                    this.#log.log('Error updating user');
+                    this.#log.log(err.message);
+                    reject(err);
+                } else {
+                    this.#log.log(`User ${user.getName()} updated`);
+                    resolve(true);
                 }
             });
         });

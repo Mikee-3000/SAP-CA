@@ -1,6 +1,8 @@
 const DBConnection = require('./DBConnection');
 const UserRepo = require('./UserRepo.js');
 const Config = require('./Config.js');
+const bcrypt = require('bcrypt');
+
 var generator = require('generate-password');
 const options = {
     numbers: true,
@@ -12,7 +14,7 @@ class User {
     #email;
     #password;
     #isAdmin;
-    #isDisabled;
+    #isBlocked;
     #loginFailedAttempts;
     #log;
     #key;
@@ -25,82 +27,123 @@ class User {
         return password;
     }
 
-    constructor(log, name, password, email, isAdmin, isDisabled) {
-        this.#log = log; // Initialize log as an empty array
-        this.#db = new DBConnection().getConnection();  
-        this.#name = name;
-        this.#password = password;
-        this.#email = email;
-        this.#isAdmin = isAdmin;
-        this.#isDisabled = isDisabled;  
-        this.#loginFailedAttempts = 0;
-        this.#userRepo = new UserRepo();
+    constructor(log) {
+        this.#log = log;
+        this.#userRepo = new UserRepo(log);
         this.#config = new Config();
-        this.validateUserName().then(() => {
-            this.#userRepo.addUser(this)
-        }).then(() => { }).catch(err => {
-            this.#log.log(err);
-            this.#log.log(`User ${this.#name} not created`);
-        });
-    }
+    };
 
-    validatePassword() {
+    async validatePassword(passw) {
+        const minLen = 8;
+        const maxLen = 64;
+        // check length
+        if (passw.length < minLen || passw.length > maxLen) {
+            this.#log.log("Password length is invalid");
+            throw new Error('invalid password');
+        }
+        // check for 3 or more of the same characters
+        const threeChar = /(.)\1\1/;
+        if (threeChar.test(passw)) {
+            this.#log.log("Password contains 3 or more of the same characters");
+            throw new Error('invalid password');
+        }
+        // check for 3 or more consecutive numbers
+        const threeNum = /012|123|234|345|456|567|678|789/;
+        if (threeNum.test(passw)) {
+            this.#log("Password contains 3 or more consecutive numbers");
+            throw new Error('invalid password');
+        }
+        this.#log.log("Password is valid");
+        return true;
     }
-    validateUserName() {
+    hashPassword(passw) {
+        const saltRounds = 10;
+        return bcrypt.hashSync(passw, saltRounds);
+    }
+    async checkIfUserExists(uName) {
+        let userExists = await this.#userRepo.checkIfUserExists(uName);
+        if (userExists) {
+            return true;
+        }
+        return false;
+    }
+    validateUserName(uName) {
+        this.#log.log(`Validating username ${uName}`);
         return new Promise((resolve, reject) => {
-            this.#userRepo.checkIfUserExists(this.#name).then(userExists => {
-            if (userExists) {
-                resolve(false);
+            if (uName === undefined || uName === null) {
+                reject("Username is undefined or null");
             } else {
                 let mln = this.#config.getMaxLenName(); 
                 const pattern = `^[a-z][-a-z_0-9]{4,${mln}}$`;
                 const regex = new RegExp(pattern);
-                if (regex.test(this.#name)) {
-                    this.#log.log(`Username ${this.#name} is valid`);
+                if (regex.test(uName)) {
+                    this.#log.log(`Username ${uName} is valid`);
                     resolve(true);
                 } else {
-                    // this.#log.log(`Username ${this.#name} is invalid`);
                     reject("Username is invalid");
                 }   
             }
         });
-        })
-        // .catch(err => {
-        //     this.#log.log(err);
-        //     return false;
-        // });
+    }
+
+    async setName(name) {
+        try {
+            let validate = await this.validateUserName(name);
+            this.#name = name;
+            return this;
+        } catch(err) {
+            throw new Error(err);
+        }
     }
 
     getName() {
         return this.#name;
     }
-    setPassword(password) {
-        this.#password = password;
+
+    async setPassword(password) {
+        try {
+            let valid = await this.validatePassword(password);
+            this.#password = this.hashPassword(password);
+            return this;
+        } catch(err) {
+            throw new Error(err);
+        };
     }
+
     getPassword() {
         return this.#password;
     }
-    setEmail(email) {
+
+    async setEmail(email) {
         this.#email = email;
+        return this;
     }
+
     getEmail() {
         return this.#email;
     }
-    setIsAdmin(isAdmin) {
+
+    async setIsAdmin(isAdmin) {
         this.#isAdmin = isAdmin;
+        return this;
     }
+
     getIsAdmin() {
         return this.#isAdmin;
     }
-    setKey(key) {
+
+    async setKey(key) {
         this.#key = key;
+        return this;
     }
+
     getKey() {  
         return this.#key;
     }
 
-    deleteKey() {
+    async deleteKey() {
         this.#key = null;
+        resolve(this);
     }
 
     listQA() {
@@ -115,16 +158,18 @@ class User {
     deleteThisUser() {
     }
 
-    setIsDisabled(isDisabled) {
-        this.#isDisabled = isDisabled;
+    async setIsBlocked(isBlocked) {
+        this.#isBlocked = isBlocked;
+        return this;
     }
 
-    getIsDisabled() {
-        return this.#isDisabled;
+    getIsBlocked() {
+        return this.#isBlocked;
     }
 
-    setLoginFailedAttempts(loginFailedAttempts) {
+    async setLoginFailedAttempts(loginFailedAttempts) {
         this.#loginFailedAttempts = loginFailedAttempts;
+        return this;
     }
 
     getLoginFailedAttempts() {
