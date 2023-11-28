@@ -36,16 +36,12 @@ class User {
         this.#loginFailedAttempts = 0;
         this.#userRepo = new UserRepo();
         this.#config = new Config();
-        if (this.validateUserName()) {
-            this.#userRepo.addUser(this).then((res) => {
-                if (res===true) {
-                    this.#log.log('User added');
-                };
-            }).catch(err => {
-                this.#log.log(err);
-            });
-            
-        }
+        this.validateUserName().then(() => {
+            this.#userRepo.addUser(this)
+        }).then(() => { }).catch(err => {
+            this.#log.log(err);
+            this.#log.log(`User ${this.#name} not created`);
+        });
     }
 
     validatePassword() {
@@ -54,26 +50,25 @@ class User {
         return new Promise((resolve, reject) => {
             this.#userRepo.checkIfUserExists(this.#name).then(userExists => {
             if (userExists) {
-                this.#log.log('User already exists');
                 resolve(false);
             } else {
-                this.#log.log(`User ${this.#name} does not exist`);
                 let mln = this.#config.getMaxLenName(); 
                 const pattern = `^[a-z][-a-z_0-9]{4,${mln}}$`;
                 const regex = new RegExp(pattern);
                 if (regex.test(this.#name)) {
-                    this.#log.log('Username is valid');
+                    this.#log.log(`Username ${this.#name} is valid`);
                     resolve(true);
                 } else {
-                    this.#log.log('Username is invalid');
-                    resolve(false);
+                    // this.#log.log(`Username ${this.#name} is invalid`);
+                    reject("Username is invalid");
                 }   
             }
         });
-        }).catch(err => {
-            this.#log.log(err);
-            return false;
-        });
+        })
+        // .catch(err => {
+        //     this.#log.log(err);
+        //     return false;
+        // });
     }
 
     getName() {

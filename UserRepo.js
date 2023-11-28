@@ -24,10 +24,8 @@ class UserRepo {
                         reject('error');
                     }
                     if (row) {
-                        this.#log.log('Table User already exists');
                         resolve(true);
                     } else {
-                        this.#log.log('Table User does not exist');
                         resolve(false);
                     }
             });
@@ -45,10 +43,8 @@ class UserRepo {
                         reject('error');
                     }
                     if (row) {
-                        this.#log.log('User already exists');
                         resolve(true);
                     } else {
-                        this.#log.log('User does not exist');
                         resolve(false);
                     }
             });
@@ -56,10 +52,10 @@ class UserRepo {
     }
 
     createUserTable() {
-        this.#log.log('Creating table User');
         var sql = this.db.prepare(`
             CREATE TABLE IF NOT EXISTS User (
-                name TEXT PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
                 password TEXT,
                 email TEXT,
                 failed_logins INTEGER,
@@ -76,7 +72,6 @@ class UserRepo {
                     this.#log.log(err.message);
                     reject(err);
                 } else {
-                    this.#log.log('Table User created');
                     resolve(true);
                 }
             });
@@ -92,8 +87,7 @@ class UserRepo {
                     this.#log.log(err.message);
                     reject(err);
                 } else {
-                    console.log(this);
-                    this.#log.log(`User added with ID: ${this.lastID}`);
+                    this.#log.log(`User ${user.getName()} added`);
                     resolve(true);
                 }
             });
@@ -110,6 +104,27 @@ class UserRepo {
                     reject(err);
                 } else {
                     resolve(row);
+                }
+            });
+        });
+    }
+
+    // check if there is at least one admin user
+    checkIfAdminUserExists() {
+        const sql = db.prepare('SELECT * FROM User WHERE is_admin = 1');
+        return new Promise((resolve, reject) => {
+            sql.get((err, row) => {
+                if (err) {
+                    // issue with the database
+                    this.#log.log('Error checking if admin user exists');
+                    this.#log.log(err.message);
+                    reject(err);
+                } else if (row) {
+                    // there is at least one admin
+                    resolve(true);
+                } else {
+                    // no admin user
+                    resolve(false);
                 }
             });
         });
